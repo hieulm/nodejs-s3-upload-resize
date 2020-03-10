@@ -1,0 +1,27 @@
+{
+  "extends": [
+    "airbnb-base",
+    "plugin:prettier/recommended"
+  ],
+  "plugins": [
+    "prettier",
+    "eslint-plugin-standard"
+  ],
+  "rules": {
+    "no-nested-ternary": [0, {"allowParensWrapped": true}],
+    "prettier/prettier": [
+      "error"
+    ],
+    "camelcase": [0, {"properties": "never"}]
+  },
+  "parserOptions": {
+    "ecmaVersion": 9,
+    "sourceType": "module"
+  },
+  "env": {
+    "es6": true,
+    "browser": false,
+    "node": true,
+    "commonjs": true
+  }
+}
