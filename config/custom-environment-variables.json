@@ -1,5 +1,14 @@
 {
   "env": "NODE_ENV",
   "port": "PORT",
-  "host": "HOST"
+  "host": "HOST",
+  "aws": {
+    "access_key_id": "AWS_ACCESS_KEY_ID",
+    "secret_access_key": "AWS_SECRET_ACCESS_KEY",
+    "region": "AWS_REGION",
+    "bucket": "AWS_S3_BUCKET"
+  },
+  "photo": {
+    "allowed_dimensions": "ALLOWED_DIMENSIONS"
+  }
 }
