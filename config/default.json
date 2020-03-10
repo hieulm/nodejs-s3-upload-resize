@@ -1,5 +1,14 @@
 {
   "env": "development",
   "port": 8000,
-  "host": "localhost"
+  "host": "localhost",
+  "aws" : {
+    "access_key_id": "",
+    "secret_access_key": "",
+    "region": "ap-southeast-1",
+    "bucket": "photo-comspaces-io"
+  },
+  "photo": {
+    "allowed_dimensions": "200x200,300x300,400x400,500x500,600x600,800x800"
+  }
 }

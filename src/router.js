@@ -13,5 +13,7 @@ module.exports.create = () => {
   );
   router.post('/photos', photoHandler.upload);
 
+  router.get('/photos/:key', photoHandler.getPhoto);
+
   return router;
 };

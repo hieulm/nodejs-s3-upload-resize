@@ -22,6 +22,26 @@ module.exports.listS3Objects = bucketName => {
   }
 };
 
+module.exports.getObjectUrl = ({ Bucket, Key }) => {
+  try {
+    const s3 = new AWS.S3(awsConfig);
+
+    return s3.getSignedUrl('getObject', { Bucket, Key, Expires: 60 });
+  } catch (error) {
+    throw error;
+  }
+};
+
+module.exports.readStream = ({ Bucket, Key }) => {
+  try {
+    const s3 = new AWS.S3(awsConfig);
+
+    return s3.getObject({ Bucket, Key }).createReadStream();
+  } catch (error) {
+    throw error;
+  }
+};
+
 // module.exports.streamImageFromClientToS3 = readStream => {
 //   try {
 //     S3 = new AWS.S3({ apiVersion: '2006-03-01' });
@@ -32,7 +52,7 @@ module.exports.listS3Objects = bucketName => {
 // };
 
 module.exports.writeStream = ({ Bucket, Key }, params) => {
-  s3 = new AWS.S3(awsConfig);
+  const s3 = new AWS.S3(awsConfig);
   const passThrough = new stream.PassThrough();
 
   return {
