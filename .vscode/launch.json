@@ -1,0 +1,15 @@
+{
+  "version": "0.2.0",
+  "diagnosticLogging": true,
+  "configurations": [
+      {
+          "name": "Launch Program",
+          "type": "node",
+          "request": "launch",
+          "port": 9229,
+          "runtimeExecutable": "npm",
+          "runtimeArgs": ["run-script", "debug"],
+          "program": "${workspaceFolder}/src/index.js"
+      }
+  ]
+}
