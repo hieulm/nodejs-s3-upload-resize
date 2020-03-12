@@ -2,20 +2,27 @@ const config = require('config');
 const photoUcase = require('../usecase/photo_usecase');
 const COMMON_ERRORS = require('../errors/common_errors');
 
-module.exports.upload = (req, res, next) => {
-  const { headers } = req;
-  const contentType = headers['content-type'];
-  if (contentType.split('/')[0] != 'image') {
-    return res.status(415).json({
-      errors: [{ code: 415, message: 'unsupported image format, supported file types: png, jpg, jpeg' }],
-    });
-  }
-  photoUcase.uploadAndResize(req, (err, data) => {
-    if (err) next(err);
-    else {
-      res.status(201).json(data);
+module.exports.upload = async (req, res, next) => {
+  try {
+    const { headers } = req;
+    const contentType = headers['content-type'];
+    if (contentType.split('/')[0] != 'image') {
+      return res.status(415).json({
+        errors: [
+          {
+            code: 415,
+            message:
+              'unsupported image format, supported file types: png, jpg, jpeg',
+          },
+        ],
+      });
     }
-  });
+
+    const result = await photoUcase.uploadAndResize(req);
+    res.status(201).json(result);
+  } catch (error) {
+    next(error);
+  }
 };
 
 module.exports.getPhoto = async (req, res, next) => {

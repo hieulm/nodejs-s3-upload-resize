@@ -1,4 +1,4 @@
-const uuid = require('uuid').v1;
+const uuid = require('generate-safe-id');
 const Sharp = require('sharp');
 const config = require('config');
 const awsRepo = require('../repository/aws_repo');
@@ -8,15 +8,6 @@ const ALLOWED_DIMENSIONS = new Set();
 
 const dimensions = config.get('photo.allowed_dimensions').split(/\s*,\s*/);
 dimensions.forEach(dimension => ALLOWED_DIMENSIONS.add(dimension));
-
-module.exports.listPhoto = async bucket => {
-  try {
-    const data = await awsRepo.listS3Objects(bucket);
-    return data;
-  } catch (error) {
-    return error;
-  }
-};
 
 module.exports.getPhotoURL = ({ bucket, key }, params) => {
   return new Promise((resolve, reject) => {
@@ -84,45 +75,64 @@ module.exports.getPhotoURL = ({ bucket, key }, params) => {
   });
 };
 
-module.exports.uploadAndResize = (readStream, cb) => {
-  const id = uuid();
-  const resizeWriteStream = Sharp()
-    .resize(1920, 1080, {
-      fit: 'inside',
-      withoutEnlargement: true,
-    })
-    .toFormat('png');
+module.exports.uploadAndResize = async readStream => {
+  try {
+    const Emitter = require('events');
+    const errorEmitter = new Emitter();
 
-  const { writeStream, uploaded } = awsRepo.writeStream(
-    {
-      Bucket: config.get('aws.bucket'),
-      Key: `${id}.png`,
-    },
-    {
-      ACL: 'public-read',
-    }
-  );
-
-  readStream.pipe(resizeWriteStream).pipe(writeStream);
-
-  resizeWriteStream.on('error', err => {
-    console.error(err);
-    if ((err.message = 'Input buffer contains unsupported image format'))
-      cb(COMMON_ERRORS.UNSUPPORTED_IMAGE_FORMAT);
-    else cb(COMMON_ERRORS.INTERNAL_SERVER_ERROR);
-  });
-  writeStream.on('error', err => {
-    console.error(err);
-    cb(COMMON_ERRORS.INTERNAL_SERVER_ERROR);
-  });
-  uploaded
-    .then(data => {
-      cb(null, {
-        key: data.key,
-        location: data.Location,
-      });
-    })
-    .catch(err => {
-      cb(err);
+    errorEmitter.on('error', err => {
+      throw err;
     });
+
+    const id = uuid();
+    const resizeWriteStream = Sharp()
+      .resize(1920, 1080, {
+        fit: 'inside',
+        withoutEnlargement: true,
+      })
+      .toFormat('png');
+
+    const { writeStream, uploaded } = awsRepo.writeStream(
+      {
+        Bucket: config.get('aws.bucket'),
+        Key: `${id}.png`,
+      },
+      {
+        ACL: 'public-read',
+      }
+    );
+
+    const end = new Promise(async (resolve, reject) => {
+      try {
+        resizeWriteStream.on('error', err => {
+          console.error(err);
+          writeStream.destroy();
+          if ((err.message = 'Input buffer contains unsupported image format'))
+            reject(COMMON_ERRORS.UNSUPPORTED_IMAGE_FORMAT);
+          else reject(COMMON_ERRORS.INTERNAL_SERVER_ERROR);
+        });
+        writeStream.on('error', async err => {
+          reject(COMMON_ERRORS.INTERNAL_SERVER_ERROR);
+        });
+        readStream
+          .pipe(resizeWriteStream)
+          .pipe(writeStream)
+          .on('error', err => {
+            reject(COMMON_ERRORS.INTERNAL_SERVER_ERROR);
+          });
+        const resp = await uploaded;
+        resolve({
+          key: resp.key,
+          location: `${config.get('photo.root_url')}/${resp.key}`,
+        });
+      } catch (error) {
+        reject(error);
+      }
+    });
+
+    const result = await end;
+    return result;
+  } catch (error) {
+    throw error;
+  }
 };
