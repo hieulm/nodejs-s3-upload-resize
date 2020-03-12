@@ -6,26 +6,16 @@ module.exports.upload = (req, res, next) => {
   const { headers } = req;
   const contentType = headers['content-type'];
   if (contentType.split('/')[0] != 'image') {
-    return res.status(422).json({
-      errors: [{ code: 422, message: 'unsupported image format' }],
+    return res.status(415).json({
+      errors: [{ code: 415, message: 'unsupported image format, supported file types: png, jpg, jpeg' }],
     });
   }
   photoUcase.uploadAndResize(req, (err, data) => {
     if (err) next(err);
     else {
-      res.status(200).json(data);
+      res.status(201).json(data);
     }
   });
-};
-
-module.exports.listPhoto = async (req, res, next) => {
-  try {
-    const data = await photoUcase.listPhoto(config.get('aws.bucket'));
-
-    res.status(200).json(data);
-  } catch (error) {
-    next(error);
-  }
 };
 
 module.exports.getPhoto = async (req, res, next) => {
@@ -46,29 +36,8 @@ module.exports.getPhoto = async (req, res, next) => {
       { size }
     );
 
-    res.redirect(301, objectUrl);
-    // const readStream = await photoUcase.downloadPhoto(
-    //   {
-    //     bucket: config.get('aws.bucket'),
-    //     key,
-    //   },
-    //   { size }
-    // );
-
-    // readStream
-    //   .pipe(res)
-    //   .on('data', data => {
-    //     console.log('data received');
-    //   })
-    //   .on('error', err => {
-    //     console.error(err);
-    //     // next(COMMON_ERRORS.INTERNAL_SERVER_ERROR);
-    //   })
-    //   .on('close', () => {
-    //     console.info('done');
-    //   });
+    res.redirect(302, objectUrl);
   } catch (error) {
     next(error);
-    console.error(error);
   }
 };

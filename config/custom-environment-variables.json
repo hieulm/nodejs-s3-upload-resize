@@ -9,6 +9,8 @@
     "bucket": "AWS_S3_BUCKET"
   },
   "photo": {
-    "allowed_dimensions": "ALLOWED_DIMENSIONS"
+    "allowed_dimensions": "ALLOWED_DIMENSIONS",
+    "max_file_size": "MAX_FILE_SIZE",
+    "root_url": "PHOTO_ROOT_URL"
   }
 }

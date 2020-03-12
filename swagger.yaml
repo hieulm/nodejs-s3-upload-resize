@@ -1,0 +1,78 @@
+openapi: 3.0.0
+servers:
+  - description: Comspaces Staging Server
+    url: "https://api.comspaces.me"
+  - description: Comspace.io
+    url: "https://api.comspaces.io"
+info:
+  title: comspaces photo uploading service
+  version: 0.0.1
+  contact:
+    email: hieulm@live.com
+    name: Hieu Le
+tags:
+  - name: photo
+paths:
+  /photo:
+    post:
+      security: 
+      - BearerAuth: []
+      tags:
+        - photo
+      description: upload photo
+      requestBody:
+        content:
+          image/png:
+            schema:
+              type: string
+              format: binary
+      responses:
+        200:
+          description: image uploaded
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status_code:
+                    type: string
+                    example: 200
+                  location:
+                    type: string
+                    example: https://api.comspaces.me/photo/0945e7e0-62f4-11ea-b7e7-c3465d08162a.png
+                  key:
+                    type: string
+                    example: 0945e7e0-62f4-11ea-b7e7-c3465d08162a.png
+  /photo/{key}:
+    get:
+      parameters:
+        - in: path
+          name: key
+          example: 0945e7e0-62f4-11ea-b7e7-c3465d08162a.png 
+          schema:
+            type: string
+          required: true
+        - in: query
+          name: size
+          schema:
+            type: string
+            example: 200x200
+          required: false
+      tags:
+        - photo
+      responses:
+        302:
+          description: redirect with photo url
+          headers:
+            Location:
+              schema:
+                type: string
+        404:
+          description: image not found
+      
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

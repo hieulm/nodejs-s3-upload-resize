@@ -9,6 +9,8 @@
     "bucket": "photo-comspaces-io"
   },
   "photo": {
-    "allowed_dimensions": "200x200,300x300,400x400,500x500,600x600,800x800"
+    "allowed_dimensions": "200x200,300x300,400x400,500x500,600x600,800x800",
+    "max_file_size": "10MB",
+    "root_url": "https://api.comspaces.me/photo"
   }
 }
