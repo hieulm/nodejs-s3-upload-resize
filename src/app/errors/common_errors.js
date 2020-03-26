@@ -49,6 +49,18 @@ module.exports = {
       },
     ],
   }),
+  OBJECT_NOT_FOUND: new APIError({
+    isPublic: true,
+    code: 404,
+    status: 404,
+    message: 'object not found',
+    errors: [
+      {
+        code: 404,
+        message: 'object not found',
+      },
+    ],
+  }),
   INVALID_PHOTO_DIMENSION: new APIError({
     isPublic: true,
     code: 400,

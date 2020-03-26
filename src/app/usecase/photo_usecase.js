@@ -9,68 +9,82 @@ const ALLOWED_DIMENSIONS = new Set();
 const dimensions = config.get('photo.allowed_dimensions').split(/\s*,\s*/);
 dimensions.forEach(dimension => ALLOWED_DIMENSIONS.add(dimension));
 
+// test image:  http://localhost:8000/photos/OhOk_8puhrCgEWgpjJWwZgJrseR3K_mib5Yt-idW.png?size=200x200
 module.exports.getPhotoURL = ({ bucket, key }, params) => {
-  return new Promise((resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
     const { size } = params;
     if (!size) resolve(awsRepo.getObjectUrl({ Bucket: bucket, Key: key }));
     else {
       if (!ALLOWED_DIMENSIONS.has(size))
         resolve(awsRepo.getObjectUrl({ Bucket: bucket, Key: key }));
 
-      const readStream = awsRepo.readStream({ Bucket: bucket, Key: key });
-
-      readStream.on('error', err => {
-        console.error(err);
-        reject(COMMON_ERRORS.INTERNAL_SERVER_ERROR);
-      });
-      const width = parseInt(size.split('x')[0]);
-      const height = parseInt(size.split('x')[1]);
-      const resizeStream = Sharp().resize(width, height, {
-        fit: 'inside',
-        withoutEnlargement: true,
-      });
-
-      resizeStream
-        .on('error', err => {
-          console.error(err);
-          reject(COMMON_ERRORS.INTERNAL_SERVER_ERROR);
-        })
-        .toFormat('png');
-
-      const { writeStream, uploaded } = awsRepo.writeStream(
-        {
+      try {
+        const existedResizedImage = await awsRepo.getObjectUrl({
           Bucket: bucket,
           Key: `${size}/${key}`,
-        },
-        {
-          ACL: 'public-read',
-        }
-      );
-
-      writeStream.on('error', err => {
-        console.error(err);
-        reject(err);
-      });
-
-      readStream
-        .pipe(resizeStream)
-        .pipe(writeStream)
-        .on('done', () => {
-          console.log('done');
         });
 
-      uploaded
-        .then(async data => {
-          const objectUrl = await awsRepo.getObjectUrl({
-            Bucket: bucket,
-            Key: `${size}/${key}`,
+        resolve(existedResizedImage);
+      } catch (error) {
+        if (error.code === 'NotFound') {
+          const readStream = awsRepo.readStream({ Bucket: bucket, Key: key });
+
+          readStream.on('error', err => {
+            console.error(err);
+            reject(COMMON_ERRORS.INTERNAL_SERVER_ERROR);
+          });
+          const width = parseInt(size.split('x')[0]);
+          const height = parseInt(size.split('x')[1]);
+          const resizeStream = Sharp().resize(width, height, {
+            fit: 'inside',
+            withoutEnlargement: true,
           });
 
-          resolve(objectUrl);
-        })
-        .catch(err => {
-          reject(err);
-        });
+          resizeStream
+            .on('error', err => {
+              console.error(err);
+              reject(COMMON_ERRORS.INTERNAL_SERVER_ERROR);
+            })
+            .toFormat('png');
+
+          const { writeStream, uploaded } = awsRepo.writeStream(
+            {
+              Bucket: bucket,
+              Key: `${size}/${key}`,
+            },
+            {
+              ACL: 'public-read',
+            }
+          );
+
+          writeStream.on('error', err => {
+            console.error(err);
+            reject(err);
+          });
+
+          readStream
+            .pipe(resizeStream)
+            .pipe(writeStream)
+            .on('done', () => {
+              console.log('done');
+            });
+
+          uploaded
+            .then(async data => {
+              const objectUrl = await awsRepo.getObjectUrl({
+                Bucket: bucket,
+                Key: `${size}/${key}`,
+              });
+
+              resolve(objectUrl);
+            })
+            .catch(err => {
+              reject(err);
+            });
+        } else {
+          throw error;
+        }
+      }
     }
   });
 };

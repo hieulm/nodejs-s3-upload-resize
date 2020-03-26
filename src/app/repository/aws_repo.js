@@ -1,6 +1,7 @@
 const AWS = require('aws-sdk');
 const config = require('config');
 const stream = require('stream');
+const COMMON_ERRORS = require('../errors/common_errors');
 
 const awsConfig = new AWS.Config({
   accessKeyId: config.get('aws.access_key_id'),
@@ -22,9 +23,16 @@ module.exports.listS3Objects = bucketName => {
   }
 };
 
-module.exports.getObjectUrl = ({ Bucket, Key }) => {
+module.exports.getObjectUrl = async ({ Bucket, Key }) => {
   try {
     const s3 = new AWS.S3(awsConfig);
+
+    await s3
+      .headObject({
+        Bucket,
+        Key,
+      })
+      .promise();
 
     return s3.getSignedUrl('getObject', { Bucket, Key, Expires: 60 });
   } catch (error) {
