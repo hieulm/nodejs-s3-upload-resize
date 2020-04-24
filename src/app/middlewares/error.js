@@ -2,6 +2,7 @@ const httpStatus = require('http-status');
 const expressValidation = require('express-validation');
 const config = require('config');
 const APIError = require('../../utils/APIError');
+const logger = require('../../core/logger.core');
 
 const env = config.get('env');
 
@@ -17,6 +18,8 @@ const handler = (err, req, res, next) => {
     errors: err.errors,
     stack: err.stack,
   };
+
+  logger.error(err);
 
   if (env !== 'development') {
     delete response.stack;
