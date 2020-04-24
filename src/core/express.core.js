@@ -5,8 +5,9 @@ const morgan = require('morgan');
 const rid = require('connect-rid');
 const responseTime = require('response-time');
 const error = require('../app/middlewares/error');
+const logger = require('./logger.core');
 
-module.exports.create = routes => {
+module.exports.create = (routes) => {
   const app = express();
 
   // parse body params and attache them to req.body
@@ -34,6 +35,11 @@ module.exports.create = routes => {
   );
 
   app.use(routes);
+
+  app.use((err, req, res, next) => {
+    logger.error(err.stack);
+    next();
+  });
 
   app.use(error.converter);
 
